@@ -1,0 +1,202 @@
+import pygame
+import sys
+import random
+
+class Zmija():
+    def __init__(self):
+        self.pozicije = [((stranica/2), (stranica/2))]
+        self.duzina = len(self.pozicije) 
+        self.smjer = desno
+        self.boja = paletaBoja[2]
+        self.skor = 0 #zamijeniti za duzina -1
+
+    def pozicijaGlave(self):
+        return self.pozicije[0]
+        #bespotrebna funkcija, samo svugdje zamijeniti za self.pozicije[0]
+
+    def skrece(self, point):
+        if self.duzina > 1 and (point[0]*-1, point[1]*-1) == self.smjer:
+            return
+        else:
+            self.smjer = point
+
+    #dodati funkciju koja mijenja smjer
+    #samo invertati smjer od self.pozicije
+    #self.smjer okrenuti (samo pomnoziti oba broja u paru (x,y) sa -1)
+
+    def ide(self):
+        cur = self.pozicijaGlave()
+        x,y = self.smjer
+        new = (((cur[0]+(x*stranicaKvadrata))%stranica), (cur[1]+(y*stranicaKvadrata))%stranica)
+        #zbog ovog %stranica gore zmija se teleportira na drugoj strani
+        #dodati if (rubovi): krajIgre()
+
+        if len(self.pozicije) > 2 and new in self.pozicije[2:]:
+            return True #kraj igre
+        else:
+            self.pozicije.insert(0,new)
+            if len(self.pozicije) > self.duzina:
+                self.pozicije.pop()
+            return False #nije kraj igre
+
+
+    def draw(self,surface):
+        for p in self.pozicije:
+            r = pygame.Rect((p[0], p[1]), (stranicaKvadrata,stranicaKvadrata))
+            pygame.draw.rect(surface, self.boja, r)
+            pygame.draw.rect(surface, paletaBoja[4], r, debljinaLinija)
+
+    def handle_keys(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    self.skrece(gore)
+                    return False
+                elif event.key == pygame.K_DOWN:
+                    self.skrece(dole)
+                    return False
+                elif event.key == pygame.K_LEFT:
+                    self.skrece(lijevo)
+                    return False
+                elif event.key == pygame.K_RIGHT:
+                    self.skrece(desno)
+                    return False
+                elif event.key == pygame.K_SPACE:
+                    return True
+
+class Food():
+    def __init__(self):
+        self.position = (0,0)
+        self.boja = paletaBoja[3]
+        self.randomize_position()
+
+    def randomize_position(self):
+        self.position = (random.randint(0, kvadrata-1)*stranicaKvadrata, random.randint(0, kvadrata-1)*stranicaKvadrata)
+        #ispraviti bug u kojem se hrana moze pojaviti unutar tijela zmije
+        #unutar funkcije staviti (if ispunjen uslov da bude hrana tu): ovo gore
+        #else nek pozofe funkciju randomize_position
+
+    def draw(self, surface):
+        r = pygame.Rect((self.position[0], self.position[1]), (stranicaKvadrata, stranicaKvadrata))
+        pygame.draw.rect(surface, self.boja, r)
+        pygame.draw.rect(surface, paletaBoja[4], r, debljinaLinija)
+
+def drawGrid(surface):
+    for y in range(0, int(kvadrata)): #definisati ove dvije petlje da crtaju baklavu umjesto kvadrata
+        for x in range(0, int(kvadrata)): #mozda imati file sa oblicima polja koji se povlači u ovu funkciju i onda pri kretanju zmije
+                                          #imati verzije oblika za sve tri skale (18x18, 24x24, 30x30)
+            if (x+y)%2 == 0:
+                r = pygame.Rect((x*stranicaKvadrata, y*stranicaKvadrata), (stranicaKvadrata,stranicaKvadrata))
+                pygame.draw.rect(surface, paletaBoja[0], r)
+            else:
+                rr = pygame.Rect((x*stranicaKvadrata, y*stranicaKvadrata), (stranicaKvadrata,stranicaKvadrata))
+                pygame.draw.rect(surface, paletaBoja[1], rr)
+
+
+
+
+
+#varijabilne vrijednosti
+
+skala = 0 #moze bii 0, 1, 2 sto odgovara 18x18, 24x24, 30x30
+
+paletaBoja = ((0, 57, 68), (0, 108, 103), (241, 148, 179), (254, 177, 1), (255, 235, 198))
+
+brzinaZmije = 5
+zmijaUbrzava = True
+ubrzavanje = 2
+rubovi = True
+terenTip = 1 #tip terena, da li je kvadrat, srce, baklava, šta već
+
+font = "calibri"
+fontSize = 26
+pozicijaSkora = (245, 35)
+pozicijaPauze = (221, 240)
+pozicijaKrajIgre = (211, 240)
+debljinaLinija = 3
+
+#izvedene vrijednosti
+stranicaKvadrata = int(32*(3/4)**skala)
+kvadrata = int(18*(4/3)**skala)
+stranica = kvadrata*stranicaKvadrata #mozda hard lockati na 576?
+
+#postulati
+gore = (0,-1)
+dole = (0,1)
+lijevo = (-1,0)
+desno = (1,0)
+
+
+
+def main():
+    pygame.init()
+
+    clock = pygame.time.Clock()
+    screen = pygame.display.set_mode((stranica, stranica), 0, 32)
+
+    surface = pygame.Surface(screen.get_size())
+    surface = surface.convert()
+    drawGrid(surface)
+
+    zmija = Zmija()
+    food = Food()
+    brzina = brzinaZmije
+
+    terenFile = "snakePython_teren_"+str(terenTip)+"_"+str(skala)
+
+
+
+    myfont = pygame.font.SysFont(font, fontSize, bold=True)
+    obavijestFont = pygame.font.SysFont(font, fontSize+20, bold=True)
+
+    def pauza():
+        text = obavijestFont.render("PAUZA", 1, paletaBoja[4])
+        screen.blit(text, pozicijaPauze)
+        pygame.display.update()
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        return
+
+    def krajIgre():
+        text = obavijestFont.render("KRAJ IGRE", 1, paletaBoja[4])
+        screen.blit(text, pozicijaKrajIgre)
+        pygame.display.update()
+        #DEFINISIATI STA DALJE
+        #nacrtati dva (ili trie) kvadrata, return to main menu i play again (i submit score)
+        #play again poziva reset() funkciju
+        #vratiti reset() funkciju iz youtube koda
+        #zapisati score u neki file
+        #kad se submita score, istovremeno prikazati maksimalno top 10 dosadašnjih scoreova
+
+    while (True):
+        clock.tick(5)
+        if (zmija.handle_keys()):
+            #text = obavijestFont.render("PAUZA", 1, paletaBoja[4])
+            #screen.blit(text, pozicijaPauze)
+            #pygame.display.update()
+            pauza()
+        elif zmija.ide():
+            krajIgre()
+        drawGrid(surface)
+        if zmija.pozicijaGlave() == food.position:
+            zmija.duzina += 1
+            zmija.skor += 1
+            if zmijaUbrzava:
+                brzina += ubrzavanje
+            food.randomize_position()
+        zmija.draw(surface)
+        food.draw(surface)
+        screen.blit(surface, (0,0))
+        text = myfont.render("Hrana {0}".format(zmija.skor), 1, paletaBoja[4])
+        screen.blit(text, pozicijaSkora)
+        pygame.display.update()
+
+main()
