@@ -1,6 +1,8 @@
 import pygame
 import sys
 import random
+#import numpy as np
+from numpy import loadtxt
 
 class Zmija():
     def __init__(self):
@@ -84,16 +86,20 @@ class Food():
         pygame.draw.rect(surface, self.boja, r)
         pygame.draw.rect(surface, paletaBoja[4], r, debljinaLinija)
 
-def drawGrid(surface):
+def drawGrid(surface, teren):
     for y in range(0, int(kvadrata)): #definisati ove dvije petlje da crtaju baklavu umjesto kvadrata
         for x in range(0, int(kvadrata)): #mozda imati file sa oblicima polja koji se povlači u ovu funkciju i onda pri kretanju zmije
                                           #imati verzije oblika za sve tri skale (18x18, 24x24, 30x30)
-            if (x+y)%2 == 0:
-                r = pygame.Rect((x*stranicaKvadrata, y*stranicaKvadrata), (stranicaKvadrata,stranicaKvadrata))
-                pygame.draw.rect(surface, paletaBoja[0], r)
-            else:
-                rr = pygame.Rect((x*stranicaKvadrata, y*stranicaKvadrata), (stranicaKvadrata,stranicaKvadrata))
-                pygame.draw.rect(surface, paletaBoja[1], rr)
+            if (int(teren[x+1][y+1])):
+                rrr = pygame.Rect((x*stranicaKvadrata, y*stranicaKvadrata), (stranicaKvadrata,stranicaKvadrata))
+                pygame.draw.rect(surface, (0, 0, 0), rrr)
+            else:                
+                if (x+y)%2 == 0:
+                    r = pygame.Rect((x*stranicaKvadrata, y*stranicaKvadrata), (stranicaKvadrata,stranicaKvadrata))
+                    pygame.draw.rect(surface, paletaBoja[0], r)
+                else:
+                    rr = pygame.Rect((x*stranicaKvadrata, y*stranicaKvadrata), (stranicaKvadrata,stranicaKvadrata))
+                    pygame.draw.rect(surface, paletaBoja[1], rr)
 
 
 
@@ -139,13 +145,18 @@ def main():
 
     surface = pygame.Surface(screen.get_size())
     surface = surface.convert()
-    drawGrid(surface)
+
+    terenFile = "snakePython_teren_"+str(terenTip)+"_"+str(skala)
+    teren = loadtxt(terenFile, usecols=range(kvadrata+2))
+    print (int(teren[0][0]))
+
+    drawGrid(surface, teren)
 
     zmija = Zmija()
     food = Food()
     brzina = brzinaZmije
 
-    terenFile = "snakePython_teren_"+str(terenTip)+"_"+str(skala)
+    
 
 
 
@@ -170,11 +181,10 @@ def main():
         screen.blit(text, pozicijaKrajIgre)
         pygame.display.update()
         #DEFINISIATI STA DALJE
-        #nacrtati dva (ili trie) kvadrata, return to main menu i play again (i submit score)
-        #play again poziva reset() funkciju
-        #vratiti reset() funkciju iz youtube koda
-        #zapisati score u neki file
-        #kad se submita score, istovremeno prikazati maksimalno top 10 dosadašnjih scoreova
+        #prvo traziti da se upise ime za high score
+        #ime i skor se zapisuju u neki file
+        #onda se poziva funkcija highScore() koja ispiše top 10 ili top 15 i ponuđena je opcija back to main menu
+
 
     while (True):
         clock.tick(5)
@@ -185,7 +195,7 @@ def main():
             pauza()
         elif zmija.ide():
             krajIgre()
-        drawGrid(surface)
+        drawGrid(surface, teren)
         if zmija.pozicijaGlave() == food.position:
             zmija.duzina += 1
             zmija.skor += 1
