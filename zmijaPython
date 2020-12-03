@@ -90,7 +90,7 @@ def drawGrid(surface, teren):
     for y in range(0, int(kvadrata)): #definisati ove dvije petlje da crtaju baklavu umjesto kvadrata
         for x in range(0, int(kvadrata)): #mozda imati file sa oblicima polja koji se povlači u ovu funkciju i onda pri kretanju zmije
                                           #imati verzije oblika za sve tri skale (18x18, 24x24, 30x30)
-            if (int(teren[x+1][y+1])):
+            if (int(teren[y+1][x+1])):
                 rrr = pygame.Rect((x*stranicaKvadrata, y*stranicaKvadrata), (stranicaKvadrata,stranicaKvadrata))
                 pygame.draw.rect(surface, (0, 0, 0), rrr)
             else:                
