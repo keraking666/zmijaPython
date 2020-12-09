@@ -1,3 +1,6 @@
+#OBRISATI IMPORTIRANJE TERENA KROZ FILE sa 1 0 0 0 1
+#takve stvari ne trebaju biti definisane
+
 import pygame
 import sys
 import random
