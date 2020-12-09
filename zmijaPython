@@ -69,7 +69,8 @@ class Zmija():
                 elif event.key == pygame.K_SPACE:
                     return True
 
-class Food():
+
+class Hrana():
     def __init__(self):
         self.position = (0,0)
         self.boja = paletaBoja[3]
@@ -77,7 +78,7 @@ class Food():
 
     def randomize_position(self):
         self.position = (random.randint(0, kvadrata-1)*stranicaKvadrata, random.randint(0, kvadrata-1)*stranicaKvadrata)
-        #ispraviti bug u kojem se hrana moze pojaviti unutar tijela zmije
+        #ispraviti bug u kojem se hrana moze pojaviti unutar tijela zmije ili na istoj poziciji gdje je i prepreka
         #unutar funkcije staviti (if ispunjen uslov da bude hrana tu): ovo gore
         #else nek pozofe funkciju randomize_position
 
@@ -86,6 +87,24 @@ class Food():
         pygame.draw.rect(surface, self.boja, r)
         pygame.draw.rect(surface, paletaBoja[4], r, debljinaLinija)
 
+class Prepreka():
+    def __init__(self):
+        self.position = (0,0)
+        self.boja = (0, 0, 0)
+        self.randomize_position()
+
+    def randomize_position(self):
+        self.position = (random.randint(0, kvadrata-1)*stranicaKvadrata, random.randint(0, kvadrata-1)*stranicaKvadrata)
+        #ne smije se moći pojaviti na početnim pozicijama zmije i možda nekoliko kvadrata oko početnih pozicija
+        #ne smije se moći pojaviti tamo gdje je trenutno hrana
+
+    def draw(self, surface):
+            r = pygame.Rect((self.position[0], self.position[1]), (stranicaKvadrata, stranicaKvadrata))
+            pygame.draw.rect(surface, self.boja, r)
+            pygame.draw.rect(surface, (0,0,0), r, debljinaLinija)    
+
+
+
 def drawGrid(surface, teren):
     for y in range(0, int(kvadrata)): #definisati ove dvije petlje da crtaju baklavu umjesto kvadrata
         for x in range(0, int(kvadrata)): #mozda imati file sa oblicima polja koji se povlači u ovu funkciju i onda pri kretanju zmije
@@ -93,6 +112,12 @@ def drawGrid(surface, teren):
             if (int(teren[y+1][x+1])):
                 rrr = pygame.Rect((x*stranicaKvadrata, y*stranicaKvadrata), (stranicaKvadrata,stranicaKvadrata))
                 pygame.draw.rect(surface, (0, 0, 0), rrr)
+                #ovo ovdje ne treba
+                #bolje je definisati array prepreka i onda njih nacrtati u mainu vlastitom draw funkcijom
+                #isto kao hranu
+                #jedina je razlika što će prepreka biti više
+                #kada se odabere opcija da ima grid, nek samo nacrta prepreke unutar terena
+
             else:                
                 if (x+y)%2 == 0:
                     r = pygame.Rect((x*stranicaKvadrata, y*stranicaKvadrata), (stranicaKvadrata,stranicaKvadrata))
@@ -153,7 +178,7 @@ def main():
     drawGrid(surface, teren)
 
     zmija = Zmija()
-    food = Food()
+    hrana = Hrana()
     brzina = brzinaZmije
 
     
@@ -181,7 +206,7 @@ def main():
         screen.blit(text, pozicijaKrajIgre)
         pygame.display.update()
         #DEFINISIATI STA DALJE
-        #prvo traziti da se upise ime za high score
+        #prvo traziti da se upise ime za high score - upisati 
         #ime i skor se zapisuju u neki file
         #onda se poziva funkcija highScore() koja ispiše top 10 ili top 15 i ponuđena je opcija back to main menu
 
@@ -196,14 +221,17 @@ def main():
         elif zmija.ide():
             krajIgre()
         drawGrid(surface, teren)
-        if zmija.pozicijaGlave() == food.position:
+        if zmija.pozicijaGlave() == hrana.position:
             zmija.duzina += 1
             zmija.skor += 1
             if zmijaUbrzava:
                 brzina += ubrzavanje
-            food.randomize_position()
+            hrana.randomize_position()
+        #if zmija.pozicijaGlave() == prepreka.position: -ovaj uslov adaptovati nizu prepreka
+        #ili koristiti if zmija.pozicijaGlave() in prepreke.positions (što je logičnije i pametnije)
+        #    krajIgre() - i nek završi igru prije nego što iscrta zmiju na toj poziciji
         zmija.draw(surface)
-        food.draw(surface)
+        hrana.draw(surface)
         screen.blit(surface, (0,0))
         text = myfont.render("Hrana {0}".format(zmija.skor), 1, paletaBoja[4])
         screen.blit(text, pozicijaSkora)
